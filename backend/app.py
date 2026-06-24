@@ -19,6 +19,11 @@ next_task_id = 1
 next_comment_id = 1
 
 
+@app.route("/")
+def home():
+    return jsonify({"message": "Project Management System API"})
+
+
 def get_user_from_token():
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
@@ -229,4 +234,4 @@ def get_stats():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0")
