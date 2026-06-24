@@ -7,7 +7,8 @@ app = Flask(__name__)
 CORS(app)
 SECRET_KEY = "secret-key"
 
-users, projects, tasks, comments = [], [], [], []
+users = [{"id": 0, "username": "demo", "email": "demo@test.com", "password": "pass"}]
+projects, tasks, comments = [], [], []
 ids = {"user": 1, "project": 1, "task": 1, "comment": 1}
 
 def require_auth(f):
