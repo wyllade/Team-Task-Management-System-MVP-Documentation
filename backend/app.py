@@ -44,7 +44,8 @@ def register():
     u = {"id": ids["user"], "username": d["username"], "email": d["email"], "password": d["password"]}
     users.append(u)
     ids["user"] += 1
-    return jsonify({"message": "User registered"})
+    token = jwt.encode({"user_id": u["id"], "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, SECRET_KEY, algorithm="HS256")
+    return jsonify({"token": token, "user": {"id": u["id"], "username": u["username"]}})
 
 @app.route("/login", methods=["POST"])
 def login():
@@ -97,6 +98,7 @@ def handle_tasks():
 @app.route("/tasks/<int:tid>", methods=["PUT", "DELETE"])
 @require_auth
 def update_task(tid):
+    
     t = _find(tasks, tid)
     if not t:
         return jsonify({"message": "Not found"}), 404
