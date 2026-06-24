@@ -1,95 +1,56 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
+const API = "http://localhost:5000";
+
 function Dashboard() {
   const [projects, setProjects] = useState([]);
-  const [stats, setStats] = useState({ total_projects: 0, total_tasks: 0, completed_tasks: 0 });
+  const [stats, setStats] = useState({});
   const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [desc, setDesc] = useState("");
   const navigate = useNavigate();
-
   const token = localStorage.getItem("token");
+  const headers = { Authorization: `Bearer ${token}` };
 
-  useEffect(() => {
-    fetchProjects();
-    fetchStats();
-  }, []);
+  useEffect(() => { fetch(`${API}/projects`, { headers }).then(r => r.json()).then(setProjects); }, []);
+  useEffect(() => { fetch(`${API}/stats`, { headers }).then(r => r.json()).then(setStats); }, []);
 
-  async function fetchProjects() {
-    const response = await fetch("http://localhost:5000/projects", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await response.json();
-    setProjects(data);
+  async function create() {
+    await fetch(`${API}/projects`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify({ name, description: desc }) });
+    setName(""); setDesc("");
+    fetch(`${API}/projects`, { headers }).then(r => r.json()).then(setProjects);
   }
 
-  async function fetchStats() {
-    const response = await fetch("http://localhost:5000/stats", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await response.json();
-    setStats(data);
+  async function del(id) {
+    await fetch(`${API}/projects/${id}`, { method: "DELETE", headers });
+    fetch(`${API}/projects`, { headers }).then(r => r.json()).then(setProjects);
   }
 
-  async function createProject() {
-    await fetch("http://localhost:5000/projects", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ name, description }),
-    });
-    setName("");
-    setDescription("");
-    fetchProjects();
-  }
-
-  async function deleteProject(id) {
-    await fetch(`http://localhost:5000/projects/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    fetchProjects();
-  }
-
-  function logout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/");
-  }
+  function logout() { localStorage.clear(); navigate("/"); }
 
   return (
-    <div style={{ padding: "2rem" }}>
-      <h1>Dashboard</h1>
-      <button onClick={logout}>Logout</button>
-
-      <div style={{ border: "1px solid #ccc", padding: "1rem", margin: "1rem 0" }}>
-        <h3>Stats</h3>
-        <p>Total Projects: {stats.total_projects}</p>
-        <p>Total Tasks: {stats.total_tasks}</p>
-        <p>Completed Tasks: {stats.completed_tasks}</p>
+    <div className="page">
+      <nav className="navbar"><h2>Dashboard</h2><button className="btn" onClick={logout}>Logout</button></nav>
+      <div className="stats">
+        <div className="card"><h3>{stats.total_projects || 0}</h3><p>Projects</p></div>
+        <div className="card"><h3>{stats.total_tasks || 0}</h3><p>Tasks</p></div>
+        <div className="card"><h3>{stats.completed_tasks || 0}</h3><p>Done</p></div>
       </div>
-
-      <div style={{ border: "1px solid #ccc", padding: "1rem", margin: "1rem 0" }}>
-        <h3>Create Project</h3>
-        <input placeholder="Project Name" value={name} onChange={(e) => setName(e.target.value)} />
-        <br />
-        <input placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
-        <br />
-        <button onClick={createProject}>Create</button>
+      <div className="card create-form">
+        <h3>New Project</h3>
+        <input placeholder="Name" value={name} onChange={e => setName(e.target.value)} />
+        <input placeholder="Description" value={desc} onChange={e => setDesc(e.target.value)} />
+        <button className="btn" onClick={create}>Create</button>
       </div>
-
-      <h3>My Projects</h3>
-      {projects.map((project) => (
-        <div key={project.id} style={{ border: "1px solid #ccc", padding: "0.5rem", margin: "0.5rem 0" }}>
-          <Link to={`/project/${project.id}`}>
-            <h4>{project.name}</h4>
-          </Link>
-          <p>{project.description}</p>
-          <button onClick={() => deleteProject(project.id)}>Delete</button>
-        </div>
-      ))}
+      <div className="project-list">
+        {projects.map(p => (
+          <div key={p.id} className="card project-item">
+            <Link to={`/project/${p.id}`}><h4>{p.name}</h4></Link>
+            <p>{p.description}</p>
+            <button className="btn small" onClick={() => del(p.id)}>Delete</button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

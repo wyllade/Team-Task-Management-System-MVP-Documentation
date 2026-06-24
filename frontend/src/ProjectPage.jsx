@@ -1,138 +1,97 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import TaskCard from "./TaskCard";
+
+const API = "http://localhost:5000";
+const COLUMNS = ["Todo", "In Progress", "Review", "Done"];
+
+function TaskCard({ task, onMove, onDelete }) {
+  const next = { "Todo": "In Progress", "In Progress": "Review", "Review": "Done" };
+  return (
+    <div className="task-card">
+      <h4>{task.title}</h4>
+      <span className="pill">{task.priority}</span>
+      {task.description && <p>{task.description}</p>}
+      {onMove && task.status !== "Done" && <button className="btn small" onClick={() => onMove(task.id, next[task.status])}>{next[task.status]}</button>}
+      {onDelete && <button className="btn small danger" onClick={() => onDelete(task.id)}>X</button>}
+    </div>
+  );
+}
 
 function ProjectPage() {
   const { id } = useParams();
   const token = localStorage.getItem("token");
-
+  const headers = { Authorization: `Bearer ${token}` };
   const [tasks, setTasks] = useState([]);
   const [comments, setComments] = useState({});
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [desc, setDesc] = useState("");
   const [priority, setPriority] = useState("Medium");
-  const [commentText, setCommentText] = useState({});
+  const [ctext, setCtext] = useState({});
 
-  useEffect(() => {
-    fetchTasks();
-  }, []);
+  useEffect(() => { load(); }, []);
 
-  async function fetchTasks() {
-    const response = await fetch(`http://localhost:5000/tasks?project_id=${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await response.json();
-    setTasks(data);
-    data.forEach((task) => fetchComments(task.id));
+  async function load() {
+    const t = await fetch(`${API}/tasks?project_id=${id}`, { headers }).then(r => r.json());
+    setTasks(t);
+    t.forEach(task => loadComments(task.id));
   }
 
-  async function fetchComments(taskId) {
-    const response = await fetch(`http://localhost:5000/comments?task_id=${taskId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await response.json();
-    setComments((prev) => ({ ...prev, [taskId]: data }));
+  async function loadComments(tid) {
+    const c = await fetch(`${API}/comments?task_id=${tid}`, { headers }).then(r => r.json());
+    setComments(prev => ({ ...prev, [tid]: c }));
   }
 
-  async function createTask() {
-    await fetch("http://localhost:5000/tasks", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ title, description, priority, project_id: parseInt(id) }),
-    });
-    setTitle("");
-    setDescription("");
-    setPriority("Medium");
-    fetchTasks();
+  function api(path, opts) {
+    return fetch(`${API}${path}`, { headers: { ...headers, "Content-Type": "application/json" }, ...opts }).then(r => r.json());
   }
 
-  async function updateStatus(taskId, status) {
-    await fetch(`http://localhost:5000/tasks/${taskId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ status }),
-    });
-    fetchTasks();
+  async function addTask() {
+    await api("/tasks", { method: "POST", body: JSON.stringify({ title, description: desc, priority, project_id: +id }) });
+    setTitle(""); setDesc(""); setPriority("Medium"); load();
   }
 
-  async function deleteTask(taskId) {
-    await fetch(`http://localhost:5000/tasks/${taskId}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    fetchTasks();
+  async function move(tid, status) {
+    await api(`/tasks/${tid}`, { method: "PUT", body: JSON.stringify({ status }) });
+    load();
   }
 
-  async function addComment(taskId) {
-    const text = commentText[taskId];
+  async function del(tid) {
+    await api(`/tasks/${tid}`, { method: "DELETE" });
+    load();
+  }
+
+  async function addComment(tid) {
+    const text = ctext[tid];
     if (!text) return;
-    await fetch("http://localhost:5000/comments", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ task_id: taskId, comment: text }),
-    });
-    setCommentText((prev) => ({ ...prev, [taskId]: "" }));
-    fetchComments(taskId);
+    await api("/comments", { method: "POST", body: JSON.stringify({ task_id: tid, comment: text }) });
+    setCtext(prev => ({ ...prev, [tid]: "" }));
+    loadComments(tid);
   }
-
-  const columns = ["Todo", "In Progress", "Review", "Done"];
 
   return (
-    <div style={{ padding: "2rem" }}>
-      <Link to="/dashboard">&larr; Back to Dashboard</Link>
-      <h1>Project #{id}</h1>
-
-      <div style={{ border: "1px solid #ccc", padding: "1rem", margin: "1rem 0" }}>
+    <div className="page">
+      <nav className="navbar">
+        <Link to="/dashboard">&larr; Back</Link>
+        <h2>Project #{id}</h2>
+      </nav>
+      <div className="card create-form">
         <h3>Add Task</h3>
-        <input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
-        <br />
-        <input placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
-        <br />
-        <select value={priority} onChange={(e) => setPriority(e.target.value)}>
-          <option>Low</option>
-          <option>Medium</option>
-          <option>High</option>
-        </select>
-        <br />
-        <button onClick={createTask}>Add Task</button>
+        <div className="row"><input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} /><select value={priority} onChange={e => setPriority(e.target.value)}><option>Low</option><option>Medium</option><option>High</option></select><button className="btn" onClick={addTask}>Add</button></div>
+        <input placeholder="Description" value={desc} onChange={e => setDesc(e.target.value)} />
       </div>
-
-      <div style={{ display: "flex", gap: "1rem" }}>
-        {columns.map((column) => (
-          <div key={column} style={{ flex: 1, border: "1px solid #ccc", padding: "0.5rem" }}>
-            <h3>{column}</h3>
-            {tasks
-              .filter((task) => task.status === column)
-              .map((task) => (
-                <div key={task.id}>
-                  <TaskCard task={task} onStatusChange={updateStatus} onDelete={deleteTask} />
-                  <div style={{ margin: "0.5rem 0" }}>
-                    <input
-                      placeholder="Add comment..."
-                      value={commentText[task.id] || ""}
-                      onChange={(e) =>
-                        setCommentText((prev) => ({ ...prev, [task.id]: e.target.value }))
-                      }
-                    />
-                    <button onClick={() => addComment(task.id)}>Comment</button>
-                    {comments[task.id] &&
-                      comments[task.id].map((c) => (
-                        <p key={c.id} style={{ fontSize: "0.9rem", margin: "0.2rem 0" }}>
-                          - {c.comment}
-                        </p>
-                      ))}
-                  </div>
+      <div className="kanban">
+        {COLUMNS.map(col => (
+          <div key={col} className="kanban-col">
+            <h3>{col}</h3>
+            {tasks.filter(t => t.status === col).map(task => (
+              <div key={task.id}>
+                <TaskCard task={task} onMove={move} onDelete={del} />
+                <div className="comment-section">
+                  <div className="row"><input placeholder="Comment..." value={ctext[task.id] || ""} onChange={e => setCtext(p => ({ ...p, [task.id]: e.target.value }))} /><button className="btn small" onClick={() => addComment(task.id)}>Post</button></div>
+                  {(comments[task.id] || []).map(c => <p key={c.id} className="comment">{c.comment}</p>)}
                 </div>
-              ))}
+              </div>
+            ))}
           </div>
         ))}
       </div>
