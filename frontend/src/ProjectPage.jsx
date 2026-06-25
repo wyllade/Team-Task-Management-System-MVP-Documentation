@@ -8,7 +8,7 @@ function TaskCard({ task, onMove, onDelete, isAdmin }) {
   const next = { "Todo": "In Progress", "In Progress": "Review", "Review": "Done" };
   return (
     <div className="task-card">
-      <h4>{task.title}</h4>
+      <Link to={`/task/${task.id}`} className="task-link"><h4>{task.title}</h4></Link>
       <span className="pill">{task.priority}</span>
       {task.assignee_name && <span className="pill assignee">Assigned: {task.assignee_name}</span>}
       {task.description && <p>{task.description}</p>}
@@ -146,7 +146,7 @@ function ProjectPage() {
         <h3>Add Task</h3>
         <div className="row">
           <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} />
-          <select value={priority} onChange={e => setPriority(e.target.value)}><option>Low</option><option>Medium</option><option>High</option></select>
+          <select value={priority} onChange={e => setPriority(e.target.value)}><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select>
           <select value={assigneeId} onChange={e => setAssigneeId(e.target.value)}>
             <option value="">Assign to...</option>
             {members.map(m => <option key={m.user_id} value={m.user_id}>{m.username}</option>)}

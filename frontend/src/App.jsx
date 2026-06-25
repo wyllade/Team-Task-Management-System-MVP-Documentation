@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import Login from "./Login";
 import Dashboard from "./Dashboard";
 import ProjectPage from "./ProjectPage";
+import TaskPage from "./TaskPage";
 import "./App.css";
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
       <Route path="/" element={token ? <Navigate to="/dashboard" /> : <Login />} />
       <Route path="/dashboard" element={token ? <Dashboard /> : <Navigate to="/" />} />
       <Route path="/project/:id" element={token ? <ProjectPage /> : <Navigate to="/" />} />
+      <Route path="/task/:id" element={token ? <TaskPage /> : <Navigate to="/" />} />
     </Routes>
   );
 }

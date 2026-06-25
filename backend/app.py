@@ -220,16 +220,21 @@ def handle_tasks():
     task["creator_name"] = user["username"]
     return jsonify(task)
 
-@app.route("/tasks/<int:task_id>", methods=["PUT", "DELETE"])
+@app.route("/tasks/<int:task_id>", methods=["GET", "PUT", "DELETE"])
 @require_auth
-def update_task(task_id):
-    """PUT: update task fields. DELETE: delete task (creator or admin only)."""
+def handle_task(task_id):
+    """GET: single task details. PUT: update fields. DELETE: remove task."""
     user = request.current_user
     task = find_by_id(tasks, task_id)
     if not task:
         return jsonify({"message": "Not found"}), 404
     if not is_member(task["project_id"], user["id"]):
         return jsonify({"message": "Unauthorized"}), 403
+    if request.method == "GET":
+        task = dict(task)
+        task["assignee_name"] = get_username(task.get("assignee_id"))
+        task["creator_name"] = get_username(task["user_id"])
+        return jsonify(task)
     if request.method == "DELETE":
         if task["user_id"] != user["id"] and not is_admin(task["project_id"], user["id"]):
             return jsonify({"message": "Unauthorized"}), 403
