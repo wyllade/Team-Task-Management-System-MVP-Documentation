@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./Login";
 import Dashboard from "./Dashboard";
 import ProjectPage from "./ProjectPage";
@@ -8,18 +8,25 @@ import TaskPage from "./TaskPage";
 import "./App.css";
 
 function App() {
-  useLocation();
   const token = localStorage.getItem("token");
+  const isLoggedIn = token !== null;
+
+  if (!isLoggedIn) {
+    return <Login />;
+  }
+
   return (
     <Routes>
-      <Route path="/" element={token ? <Navigate to="/dashboard" /> : <Login />} />
-      <Route path="/dashboard" element={token ? <Dashboard /> : <Navigate to="/" />} />
-      <Route path="/project/:id" element={token ? <ProjectPage /> : <Navigate to="/" />} />
-      <Route path="/task/:id" element={token ? <TaskPage /> : <Navigate to="/" />} />
+      <Route path="/" element={<Navigate to="/dashboard" />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/project/:id" element={<ProjectPage />} />
+      <Route path="/task/:id" element={<TaskPage />} />
     </Routes>
   );
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <BrowserRouter><App /></BrowserRouter>
+  <BrowserRouter>
+    <App />
+  </BrowserRouter>
 );
