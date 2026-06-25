@@ -90,8 +90,7 @@ def handle_projects():
         result = []
         for p in projects:
             if is_project_member(p["id"], cu["id"]):
-                members = [m for m in project_members if m["project_id"] == p["id"]]
-                result.append({**p, "member_count": len(members) + 1})
+                result.append({**p, "member_count": len([m for m in project_members if m["project_id"] == p["id"]])})
         return jsonify(result)
     d = request.json
     p = {"id": ids["project"], "name": d["name"], "description": d.get("description", ""), "user_id": cu["id"]}
@@ -132,7 +131,7 @@ def handle_members(pid):
         result = []
         result.append({"user_id": p["user_id"], "username": next((u["username"] for u in users if u["id"] == p["user_id"]), "?"), "role": "admin"})
         for m in project_members:
-            if m["project_id"] == pid:
+            if m["project_id"] == pid and m["user_id"] != p["user_id"]:
                 uname = next((u["username"] for u in users if u["id"] == m["user_id"]), "?")
                 result.append({"user_id": m["user_id"], "username": uname, "role": m["role"]})
         return jsonify(result)

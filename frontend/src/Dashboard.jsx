@@ -14,7 +14,6 @@ function Dashboard() {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   useEffect(() => { load(); }, []);
 
