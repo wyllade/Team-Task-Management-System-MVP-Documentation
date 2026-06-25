@@ -1,179 +1,450 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 
-const API = "http://localhost:5000";
-const COLUMNS = ["Todo", "In Progress", "Review", "Done"];
-
-function TaskCard({ task, onMove, onDelete, isAdmin }) {
-  const next = { "Todo": "In Progress", "In Progress": "Review", "Review": "Done" };
-  return (
-    <div className="task-card">
-      <Link to={`/task/${task.id}`} className="task-link"><h4>{task.title}</h4></Link>
-      <span className="pill">{task.priority}</span>
-      {task.assignee_name && <span className="pill assignee">Assigned: {task.assignee_name}</span>}
-      {task.description && <p>{task.description}</p>}
-      {onMove && task.status !== "Done" && <button className="btn small" onClick={() => onMove(task.id, next[task.status])}>{next[task.status]}</button>}
-      {onDelete && isAdmin && <button className="btn small danger" onClick={() => onDelete(task.id)}>X</button>}
-    </div>
-  );
-}
+const API_URL = "http://localhost:5000";
 
 function ProjectPage() {
-  const { id } = useParams();
-  const token = localStorage.getItem("token");
-  const headers = { Authorization: `Bearer ${token}` };
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-  const [tasks, setTasks] = useState([]);
-  const [comments, setComments] = useState({});
-  const [title, setTitle] = useState("");
-  const [desc, setDesc] = useState("");
-  const [priority, setPriority] = useState("Medium");
-  const [ctext, setCtext] = useState({});
-  const [assigneeId, setAssigneeId] = useState("");
+    const { id } = useParams();
 
-  const [members, setMembers] = useState([]);
-  const [allUsers, setAllUsers] = useState([]);
-  const [addUserId, setAddUserId] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false);
+    const token = localStorage.getItem("token");
 
-  useEffect(() => { loadAll(); }, []);
+    const user = JSON.parse(
+        localStorage.getItem("user") || "{}"
+    );
 
-  async function loadAll() {
-    await loadMembers();
-    await loadUsers();
-    await load();
-  }
+    const headers = {
+        Authorization: `Bearer ${token}`
+    };
 
-  async function load() {
-    const t = await fetch(`${API}/tasks?project_id=${id}`, { headers }).then(r => r.json());
-    setTasks(t);
-    t.forEach(task => loadComments(task.id));
-  }
+    const [tasks, setTasks] = useState([]);
+    const [members, setMembers] = useState([]);
+    const [users, setUsers] = useState([]);
 
-  async function loadComments(tid) {
-    const c = await fetch(`${API}/comments?task_id=${tid}`, { headers }).then(r => r.json());
-    setComments(prev => ({ ...prev, [tid]: c }));
-  }
+    const [taskTitle, setTaskTitle] = useState("");
+    const [taskDescription, setTaskDescription] = useState("");
+    const [priority, setPriority] = useState("Medium");
+    const [assigneeId, setAssigneeId] = useState("");
 
-  async function loadMembers() {
-    const m = await fetch(`${API}/projects/${id}/members`, { headers }).then(r => r.json());
-    setMembers(m);
-    const cur = m.find(mm => mm.user_id === user.id);
-    setIsAdmin(cur && cur.role === "admin");
-  }
+    const [newMemberId, setNewMemberId] = useState("");
 
-  async function loadUsers() {
-    const u = await fetch(`${API}/users`, { headers }).then(r => r.json());
-    setAllUsers(u);
-  }
+    const [isAdmin, setIsAdmin] = useState(false);
 
-  function api(path, opts) {
-    return fetch(`${API}${path}`, { headers: { ...headers, "Content-Type": "application/json" }, ...opts }).then(r => r.json());
-  }
+    useEffect(() => {
+        loadProjectData();
+    }, []);
 
-  async function addTask() {
-    const body = { title, description: desc, priority, project_id: +id };
-    if (assigneeId) body.assignee_id = +assigneeId;
-    await api("/tasks", { method: "POST", body: JSON.stringify(body) });
-    setTitle(""); setDesc(""); setPriority("Medium"); setAssigneeId(""); load();
-  }
+    async function loadProjectData() {
+        await loadMembers();
+        await loadUsers();
+        await loadTasks();
+    }
 
-  async function move(tid, status) {
-    await api(`/tasks/${tid}`, { method: "PUT", body: JSON.stringify({ status }) });
-    load();
-  }
+    async function loadMembers() {
 
-  async function del(tid) {
-    await api(`/tasks/${tid}`, { method: "DELETE" });
-    load();
-  }
+        const response = await fetch(
+            `${API_URL}/projects/${id}/members`,
+            { headers }
+        );
 
-  async function addComment(tid) {
-    const text = ctext[tid];
-    if (!text) return;
-    await api("/comments", { method: "POST", body: JSON.stringify({ task_id: tid, comment: text }) });
-    setCtext(prev => ({ ...prev, [tid]: "" }));
-    loadComments(tid);
-  }
+        const data = await response.json();
 
-  async function addMember() {
-    if (!addUserId) return;
-    await api(`/projects/${id}/members`, { method: "POST", body: JSON.stringify({ user_id: +addUserId }) });
-    setAddUserId("");
-    loadMembers();
-  }
+        setMembers(data);
 
-  async function removeMember(uid) {
-    await api(`/projects/${id}/members/${uid}`, { method: "DELETE" });
-    loadMembers();
-  }
+        const currentMember = data.find(
+            member => member.user_id === user.id
+        );
 
-  const memberIds = members.map(m => m.user_id);
-  const nonMemberUsers = allUsers.filter(u => !memberIds.includes(u.id));
+        if (
+            currentMember &&
+            currentMember.role === "admin"
+        ) {
+            setIsAdmin(true);
+        }
+    }
 
-  return (
-    <div className="page">
-      <nav className="navbar">
-        <Link to="/dashboard">&larr; Back</Link>
-        <h2>Project #{id}</h2>
-      </nav>
+    async function loadUsers() {
 
-      {isAdmin && (
-        <div className="card members-section">
-          <h3>Members</h3>
-          <div className="member-list">
-            {members.map(m => (
-              <div key={m.user_id} className="member-item">
-                <span>{m.username} <span className="pill">{m.role}</span></span>
-                {isAdmin && m.role !== "admin" && <button className="btn small danger" onClick={() => removeMember(m.user_id)}>Remove</button>}
-              </div>
-            ))}
-          </div>
-          {nonMemberUsers.length > 0 && (
-            <div className="row add-member">
-              <select value={addUserId} onChange={e => setAddUserId(e.target.value)}>
-                <option value="">-- Add member --</option>
-                {nonMemberUsers.map(u => <option key={u.id} value={u.id}>{u.username} ({u.email})</option>)}
-              </select>
-              <button className="btn small" onClick={addMember}>Add</button>
-            </div>
-          )}
-        </div>
-      )}
+        const response = await fetch(
+            `${API_URL}/users`,
+            { headers }
+        );
 
-      <div className="card create-form">
-        <h3>Add Task</h3>
-        <div className="row">
-          <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} />
-          <select value={priority} onChange={e => setPriority(e.target.value)}><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select>
-          <select value={assigneeId} onChange={e => setAssigneeId(e.target.value)}>
-            <option value="">Assign to...</option>
-            {members.map(m => <option key={m.user_id} value={m.user_id}>{m.username}</option>)}
-          </select>
-          <button className="btn" onClick={addTask}>Add</button>
-        </div>
-        <input placeholder="Description" value={desc} onChange={e => setDesc(e.target.value)} />
-      </div>
+        const data = await response.json();
 
-      <div className="kanban">
-        {COLUMNS.map(col => (
-          <div key={col} className="kanban-col">
-            <h3>{col}</h3>
-            {tasks.filter(t => t.status === col).map(task => (
-              <div key={task.id}>
-                <TaskCard task={task} onMove={move} onDelete={del} isAdmin={isAdmin} />
-                <div className="comment-section">
-                  <div className="row"><input placeholder="Comment..." value={ctext[task.id] || ""} onChange={e => setCtext(p => ({ ...p, [task.id]: e.target.value }))} /><button className="btn small" onClick={() => addComment(task.id)}>Post</button></div>
-                  {(comments[task.id] || []).map(c => <p key={c.id} className="comment"><strong>{c.username}:</strong> {c.comment}</p>)}
+        setUsers(data);
+    }
+
+    async function loadTasks() {
+
+        const response = await fetch(
+            `${API_URL}/tasks?project_id=${id}`,
+            { headers }
+        );
+
+        const data = await response.json();
+
+        setTasks(data);
+    }
+
+    async function addTask() {
+
+        const newTask = {
+            title: taskTitle,
+            description: taskDescription,
+            priority: priority,
+            project_id: Number(id)
+        };
+
+        if (assigneeId) {
+            newTask.assignee_id = Number(assigneeId);
+        }
+
+        await fetch(`${API_URL}/tasks`, {
+            method: "POST",
+            headers: {
+                ...headers,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(newTask)
+        });
+
+        setTaskTitle("");
+        setTaskDescription("");
+        setPriority("Medium");
+        setAssigneeId("");
+
+        loadTasks();
+    }
+
+    async function updateTaskStatus(taskId, newStatus) {
+
+        await fetch(
+            `${API_URL}/tasks/${taskId}`,
+            {
+                method: "PUT",
+                headers: {
+                    ...headers,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    status: newStatus
+                })
+            }
+        );
+
+        loadTasks();
+    }
+
+    async function deleteTask(taskId) {
+
+        await fetch(
+            `${API_URL}/tasks/${taskId}`,
+            {
+                method: "DELETE",
+                headers
+            }
+        );
+
+        loadTasks();
+    }
+
+    async function addMember() {
+
+        if (!newMemberId) {
+            return;
+        }
+
+        await fetch(
+            `${API_URL}/projects/${id}/members`,
+            {
+                method: "POST",
+                headers: {
+                    ...headers,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    user_id: Number(newMemberId)
+                })
+            }
+        );
+
+        setNewMemberId("");
+
+        loadMembers();
+    }
+
+    async function removeMember(memberId) {
+
+        await fetch(
+            `${API_URL}/projects/${id}/members/${memberId}`,
+            {
+                method: "DELETE",
+                headers
+            }
+        );
+
+        loadMembers();
+    }
+
+    function getNextStatus(currentStatus) {
+
+        if (currentStatus === "Todo") {
+            return "In Progress";
+        }
+
+        if (currentStatus === "In Progress") {
+            return "Review";
+        }
+
+        if (currentStatus === "Review") {
+            return "Done";
+        }
+
+        return null;
+    }
+
+    const memberIds = members.map(member => member.user_id);
+
+    const availableUsers = users.filter(user => {
+        return !memberIds.includes(user.id);
+    });
+
+    const columns = [
+        "Todo",
+        "In Progress",
+        "Review",
+        "Done"
+    ];
+
+    return (
+        <div className="page">
+
+            <nav className="navbar">
+                <Link to="/dashboard">
+                    ← Back
+                </Link>
+
+                <h2>
+                    Project #{id}
+                </h2>
+            </nav>
+
+            {isAdmin && (
+                <div className="card">
+
+                    <h3>Members</h3>
+
+                    {members.map(member => (
+                        <div
+                            key={member.user_id}
+                        >
+                            {member.username}
+                            ({member.role})
+
+                            {member.role !== "admin" && (
+                                <button
+                                    className="btn danger"
+                                    onClick={() =>
+                                        removeMember(
+                                            member.user_id
+                                        )
+                                    }
+                                >
+                                    Remove
+                                </button>
+                            )}
+                        </div>
+                    ))}
+
+                    <br />
+
+                    <select
+                        value={newMemberId}
+                        onChange={(e) =>
+                            setNewMemberId(
+                                e.target.value
+                            )
+                        }
+                    >
+                        <option value="">
+                            Add Member
+                        </option>
+
+                        {availableUsers.map(user => (
+                            <option
+                                key={user.id}
+                                value={user.id}
+                            >
+                                {user.username}
+                            </option>
+                        ))}
+                    </select>
+
+                    <button
+                        className="btn"
+                        onClick={addMember}
+                    >
+                        Add
+                    </button>
+
                 </div>
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+            )}
+
+            <div className="card">
+
+                <h3>Create Task</h3>
+
+                <input
+                    placeholder="Task Title"
+                    value={taskTitle}
+                    onChange={(e) =>
+                        setTaskTitle(
+                            e.target.value
+                        )
+                    }
+                />
+
+                <input
+                    placeholder="Description"
+                    value={taskDescription}
+                    onChange={(e) =>
+                        setTaskDescription(
+                            e.target.value
+                        )
+                    }
+                />
+
+                <select
+                    value={priority}
+                    onChange={(e) =>
+                        setPriority(
+                            e.target.value
+                        )
+                    }
+                >
+                    <option>Low</option>
+                    <option>Medium</option>
+                    <option>High</option>
+                    <option>Critical</option>
+                </select>
+
+                <select
+                    value={assigneeId}
+                    onChange={(e) =>
+                        setAssigneeId(
+                            e.target.value
+                        )
+                    }
+                >
+                    <option value="">
+                        Assign User
+                    </option>
+
+                    {members.map(member => (
+                        <option
+                            key={member.user_id}
+                            value={member.user_id}
+                        >
+                            {member.username}
+                        </option>
+                    ))}
+                </select>
+
+                <button
+                    className="btn"
+                    onClick={addTask}
+                >
+                    Create Task
+                </button>
+
+            </div>
+
+            <div className="kanban">
+
+                {columns.map(status => (
+
+                    <div
+                        key={status}
+                        className="column"
+                    >
+
+                        <h3>{status}</h3>
+
+                        {tasks
+                            .filter(
+                                task =>
+                                    task.status === status
+                            )
+                            .map(task => (
+
+                                <div
+                                    key={task.id}
+                                    className="task"
+                                >
+
+                                    <h4>
+                                        {task.title}
+                                    </h4>
+
+                                    <p>
+                                        {task.description}
+                                    </p>
+
+                                    <p>
+                                        Priority:
+                                        {task.priority}
+                                    </p>
+
+                                    {task.assignee_name && (
+                                        <p>
+                                            Assigned:
+                                            {
+                                                task.assignee_name
+                                            }
+                                        </p>
+                                    )}
+
+                                    {status !== "Done" && (
+                                        <button
+                                            className="btn"
+                                            onClick={() =>
+                                                updateTaskStatus(
+                                                    task.id,
+                                                    getNextStatus(
+                                                        task.status
+                                                    )
+                                                )
+                                            }
+                                        >
+                                            Move
+                                        </button>
+                                    )}
+
+                                    {isAdmin && (
+                                        <button
+                                            className="btn danger"
+                                            onClick={() =>
+                                                deleteTask(
+                                                    task.id
+                                                )
+                                            }
+                                        >
+                                            Delete
+                                        </button>
+                                    )}
+
+                                </div>
+
+                            ))}
+                    </div>
+
+                ))}
+
+            </div>
+
+        </div>
+    );
 }
 
 export default ProjectPage;
