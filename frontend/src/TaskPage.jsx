@@ -1,97 +1,234 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 
-const API = "http://localhost:5000";
-const COLUMNS = ["Todo", "In Progress", "Review", "Done"];
-const NEXT = { "Todo": "In Progress", "In Progress": "Review", "Review": "Done" };
+const API_URL = "http://localhost:5000";
 
 function TaskPage() {
-  const { id } = useParams();
-  const token = localStorage.getItem("token");
-  const headers = { Authorization: `Bearer ${token}` };
 
-  const [task, setTask] = useState(null);
-  const [comments, setComments] = useState([]);
-  const [ctext, setCtext] = useState("");
+    const { id } = useParams();
 
-  useEffect(() => { load(); }, []);
+    const token = localStorage.getItem("token");
 
-  async function load() {
-    const t = await fetch(`${API}/tasks/${id}`, { headers }).then(r => r.json());
-    setTask(t);
-    const c = await fetch(`${API}/comments?task_id=${id}`, { headers }).then(r => r.json());
-    setComments(c);
-  }
+    const headers = {
+        Authorization: `Bearer ${token}`
+    };
 
-  async function move(status) {
-    await fetch(`${API}/tasks/${id}`, { method: "PUT", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify({ status }) });
-    load();
-  }
+    const [task, setTask] = useState(null);
+    const [comments, setComments] = useState([]);
+    const [commentText, setCommentText] = useState("");
 
-  async function addComment() {
-    if (!ctext) return;
-    await fetch(`${API}/comments`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify({ task_id: +id, comment: ctext }) });
-    setCtext("");
-    const c = await fetch(`${API}/comments?task_id=${id}`, { headers }).then(r => r.json());
-    setComments(c);
-  }
+    useEffect(() => {
+        loadTask();
+        loadComments();
+    }, []);
 
-  if (!task) return <div className="page"><p>Loading...</p></div>;
+    async function loadTask() {
 
-  return (
-    <div className="page">
-      <nav className="navbar">
-        <Link to={`/project/${task.project_id}`}>&larr; Back to Project</Link>
-        <h2>{task.title}</h2>
-      </nav>
+        const response = await fetch(
+            `${API_URL}/tasks/${id}`,
+            { headers }
+        );
 
-      <div className="task-detail-card">
-        <div className="task-detail-row">
-          <span className="label">Status</span>
-          <span className={`pill status-${task.status.toLowerCase().replace(/\s+/g, "-")}`}>{task.status}</span>
-          {task.status !== "Done" && (
-            <button className="btn small" onClick={() => move(NEXT[task.status])}>
-              Move to {NEXT[task.status]}
-            </button>
-          )}
+        const data = await response.json();
+
+        setTask(data);
+    }
+
+    async function loadComments() {
+
+        const response = await fetch(
+            `${API_URL}/comments?task_id=${id}`,
+            { headers }
+        );
+
+        const data = await response.json();
+
+        setComments(data);
+    }
+
+    function getNextStatus(currentStatus) {
+
+        if (currentStatus === "Todo") {
+            return "In Progress";
+        }
+
+        if (currentStatus === "In Progress") {
+            return "Review";
+        }
+
+        if (currentStatus === "Review") {
+            return "Done";
+        }
+
+        return null;
+    }
+
+    async function moveTask() {
+
+        const nextStatus = getNextStatus(task.status);
+
+        await fetch(
+            `${API_URL}/tasks/${id}`,
+            {
+                method: "PUT",
+                headers: {
+                    ...headers,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    status: nextStatus
+                })
+            }
+        );
+
+        loadTask();
+    }
+
+    async function addComment() {
+
+        if (commentText === "") {
+            return;
+        }
+
+        await fetch(
+            `${API_URL}/comments`,
+            {
+                method: "POST",
+                headers: {
+                    ...headers,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    task_id: Number(id),
+                    comment: commentText
+                })
+            }
+        );
+
+        setCommentText("");
+
+        loadComments();
+    }
+
+    if (task === null) {
+        return (
+            <div className="page">
+                <p>Loading...</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="page">
+
+            <nav className="navbar">
+
+                <Link to={`/project/${task.project_id}`}>
+                    Back to Project
+                </Link>
+
+                <h2>{task.title}</h2>
+
+            </nav>
+
+            <div className="task-detail-card">
+
+                <h3>Task Details</h3>
+
+                <p>
+                    <strong>Status:</strong>
+                    {" "}
+                    {task.status}
+                </p>
+
+                {task.status !== "Done" && (
+                    <button
+                        className="btn"
+                        onClick={moveTask}
+                    >
+                        Move To {getNextStatus(task.status)}
+                    </button>
+                )}
+
+                <p>
+                    <strong>Priority:</strong>
+                    {" "}
+                    {task.priority}
+                </p>
+
+                <p>
+                    <strong>Assigned To:</strong>
+                    {" "}
+                    {task.assignee_name || "Unassigned"}
+                </p>
+
+                <p>
+                    <strong>Created By:</strong>
+                    {" "}
+                    {task.creator_name}
+                </p>
+
+                {task.description && (
+                    <p>
+                        <strong>Description:</strong>
+                        {" "}
+                        {task.description}
+                    </p>
+                )}
+
+            </div>
+
+            <div className="card">
+
+                <h3>Comments</h3>
+
+                <div className="row">
+
+                    <input
+                        type="text"
+                        placeholder="Write a comment..."
+                        value={commentText}
+                        onChange={(e) =>
+                            setCommentText(
+                                e.target.value
+                            )
+                        }
+                    />
+
+                    <button
+                        className="btn"
+                        onClick={addComment}
+                    >
+                        Post
+                    </button>
+
+                </div>
+
+                {comments.length > 0 ? (
+
+                    comments.map(comment => (
+                        <p
+                            key={comment.id}
+                            className="comment"
+                        >
+                            <strong>
+                                {comment.username}
+                            </strong>
+
+                            : {comment.comment}
+                        </p>
+                    ))
+
+                ) : (
+
+                    <p>No comments yet.</p>
+
+                )}
+
+            </div>
+
         </div>
-
-        <div className="task-detail-row">
-          <span className="label">Priority</span>
-          <span className="pill">{task.priority}</span>
-        </div>
-
-        <div className="task-detail-row">
-          <span className="label">Assigned To</span>
-          <span>{task.assignee_name || "Unassigned"}</span>
-        </div>
-
-        <div className="task-detail-row">
-          <span className="label">Created By</span>
-          <span>{task.creator_name}</span>
-        </div>
-
-        {task.description && (
-          <div className="task-detail-row">
-            <span className="label">Description</span>
-            <p>{task.description}</p>
-          </div>
-        )}
-      </div>
-
-      <div className="card comment-section-full">
-        <h3>Comments</h3>
-        <div className="row">
-          <input placeholder="Write a comment..." value={ctext} onChange={e => setCtext(e.target.value)} />
-          <button className="btn small" onClick={addComment}>Post</button>
-        </div>
-        {comments.map(c => (
-          <p key={c.id} className="comment"><strong>{c.username}:</strong> {c.comment}</p>
-        ))}
-        {comments.length === 0 && <p className="empty">No comments yet.</p>}
-      </div>
-    </div>
-  );
+    );
 }
 
 export default TaskPage;
