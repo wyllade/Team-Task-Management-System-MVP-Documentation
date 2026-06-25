@@ -1,75 +1,134 @@
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: system-ui, sans-serif; background: #f0f2f5; color: #333; }
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-.page { max-width: 1200px; margin: 0 auto; padding: 1rem; }
+/* Page */
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+}
 
-.navbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: #fff; border-radius: 8px; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
-.navbar a { text-decoration: none; color: #4361ee; font-weight: 500; }
+.page {
+    width: 90%;
+    margin: auto;
+    padding: 20px;
+}
 
-.card { background: #fff; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
-.create-form input, .create-form select { width: 100%; padding: .5rem; margin: .3rem 0; border: 1px solid #ddd; border-radius: 4px; }
-.row { display: flex; gap: .5rem; align-items: center; }
-.row input, .row select { flex: 1; }
+/* Navigation */
+.navbar {
+    background: white;
+    padding: 15px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+}
 
-.btn { background: #4361ee; color: #fff; border: none; padding: .5rem 1rem; border-radius: 4px; cursor: pointer; }
-.btn:hover { background: #3a56d4; }
-.btn.small { padding: .3rem .6rem; font-size: .85rem; }
-.btn.danger { background: #e63946; }
-.btn.danger:hover { background: #c1121f; }
+.navbar a {
+    text-decoration: none;
+    color: blue;
+}
 
-.stats { display: flex; gap: 1rem; margin-bottom: 1rem; }
-.stats .card { flex: 1; text-align: center; }
-.stats h3 { font-size: 2rem; color: #4361ee; }
+/* Cards */
+.card {
+    background: white;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+}
 
-.project-list { display: grid; gap: .5rem; }
-.project-item h4 { color: #4361ee; margin-bottom: .3rem; }
-.project-item a { text-decoration: none; }
-.project-actions { margin-top: .5rem; display: flex; gap: .3rem; }
-.project-item input { width: 100%; padding: .4rem; margin: .2rem 0; border: 1px solid #ddd; border-radius: 4px; }
+/* Forms */
+input,
+select {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+}
 
-.auth-page { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-.auth-card { background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.1); width: 350px; }
-.auth-card h1 { margin-bottom: 1rem; text-align: center; }
-.auth-card input { width: 100%; padding: .5rem; margin: .4rem 0; border: 1px solid #ddd; border-radius: 4px; }
-.auth-card .btn { width: 100%; margin-top: .5rem; }
-.toggle { text-align: center; margin-top: .8rem; color: #4361ee; cursor: pointer; }
+.row {
+    display: flex;
+    gap: 10px;
+}
 
-.kanban { display: flex; gap: 1rem; }
-.kanban-col { flex: 1; background: #f8f9fa; border-radius: 8px; padding: .5rem; min-height: 300px; }
-.kanban-col h3 { font-size: .9rem; text-transform: uppercase; color: #666; margin-bottom: .5rem; padding: .3rem .5rem; background: #e9ecef; border-radius: 4px; }
+/* Buttons */
+.btn {
+    background: blue;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    cursor: pointer;
+}
 
-.task-card { background: #fff; border-radius: 6px; padding: .6rem; margin-bottom: .5rem; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
-.task-card h4 { font-size: .9rem; margin-bottom: .3rem; }
-.task-card p { font-size: .8rem; color: #666; margin: .2rem 0; }
-.pill { font-size: .75rem; background: #e9ecef; padding: 2px 8px; border-radius: 10px; display: inline-block; margin-bottom: .3rem; margin-right: .3rem; }
-.pill.assignee { background: #d4edda; color: #155724; }
-.task-card .btn { margin-top: .3rem; }
+.btn:hover {
+    background: darkblue;
+}
 
-.comment-section { padding-left: .5rem; border-left: 2px solid #dee2e6; margin-bottom: .5rem; }
-.comment-section .row { gap: .3rem; }
-.comment-section input { font-size: .8rem; padding: .3rem; }
-.comment { font-size: .8rem; color: #555; margin: .2rem 0; }
-.comment strong { color: #333; }
+.btn.danger {
+    background: red;
+}
 
-.members-section h3 { margin-bottom: .5rem; }
-.member-list { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .5rem; }
-.member-item { display: flex; align-items: center; gap: .5rem; background: #f8f9fa; padding: .3rem .6rem; border-radius: 4px; font-size: .85rem; }
-.add-member select { flex: 1; padding: .4rem; border: 1px solid #ddd; border-radius: 4px; }
+/* Statistics */
+.stats {
+    display: flex;
+    gap: 10px;
+}
 
-.task-link { text-decoration: none; color: inherit; display: block; }
-.task-link:hover h4 { color: #4361ee; }
+.stats .card {
+    flex: 1;
+    text-align: center;
+}
 
-.task-detail-card { background: #fff; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
-.task-detail-row { display: flex; align-items: center; gap: .5rem; margin-bottom: .8rem; flex-wrap: wrap; }
-.task-detail-row .label { font-weight: 600; color: #666; min-width: 100px; font-size: .9rem; }
-.task-detail-row p { font-size: .95rem; color: #333; width: 100%; margin-top: .3rem; }
-.status-todo { background: #e9ecef; color: #495057; }
-.status-in-progress { background: #cce5ff; color: #004085; }
-.status-review { background: #fff3cd; color: #856404; }
-.status-done { background: #d4edda; color: #155724; }
+/* Projects */
+.project-item {
+    background: white;
+    padding: 10px;
+    margin-bottom: 10px;
+}
 
-.comment-section-full h3 { margin-bottom: .8rem; }
-.comment-section-full input { flex: 1; padding: .5rem; border: 1px solid #ddd; border-radius: 4px; }
-.comment-section-full .comment { margin-top: .6rem; padding-bottom: .6rem; border-bottom: 1px solid #eee; }
-.comment-section-full .comment:last-child { border-bottom: none; }
-.comment-section-full .empty { color: #999; font-size: .85rem; padding: .5rem 0; }
+/* Kanban Board */
+.kanban {
+    display: flex;
+    gap: 10px;
+}
+
+.column {
+    flex: 1;
+    background: #ddd;
+    padding: 10px;
+}
+
+.task {
+    background: white;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+/* Login/Register */
+.auth-page {
+    display: flex;
+    justify-content: center;
+    margin-top: 50px;
+}
+
+.auth-card {
+    background: white;
+    padding: 20px;
+    width: 300px;
+}
+
+/* Comments */
+.comment {
+    margin-top: 5px;
+    padding: 5px;
+    background: #eee;
+}
+
+/* Members */
+.member {
+    background: #eee;
+    padding: 5px;
+    margin: 5px;
+    display: inline-block;
+}
