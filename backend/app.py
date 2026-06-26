@@ -41,7 +41,6 @@ def get_username(user_id):
 
 
 def is_project_member(project_id, user_id):
-    """Checks if a user belongs to a project (either as owner or invited member)."""
     # Check if user is the project owner
     for project in projects:
         if project["id"] == project_id and project["owner_id"] == user_id:
@@ -56,7 +55,6 @@ def is_project_member(project_id, user_id):
 
 
 def is_project_admin(project_id, user_id):
-    """Checks if a user is an admin of a project (owner or admin role)."""
     # Project owner is always an admin
     for project in projects:
         if project["id"] == project_id and project["owner_id"] == user_id:
