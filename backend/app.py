@@ -69,7 +69,6 @@ def is_project_admin(project_id, user_id):
 
 
 def require_auth(f):
-    """Decorator that checks for a valid JWT token in the Authorization header."""
     @wraps(f)
     def wrapper(*args, **kwargs):
         auth_header = request.headers.get("Authorization", "")
