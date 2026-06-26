@@ -21,11 +21,7 @@ project_id_counter = 1
 task_id_counter = 1
 comment_id_counter = 1
 
-
-# ============================================================
 # Helper Functions
-# ============================================================
-
 def create_token(user_id):
     """Creates a JWT token that expires in 24 hours."""
     payload = {
