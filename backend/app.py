@@ -488,11 +488,7 @@ def handle_task(task_id):
     return jsonify(found_task)
 
 
-# .................................................................
 # Comments
-# .................................................................
-
-
 @app.route("/comments", methods=["GET", "POST"])
 @require_auth
 def handle_comments():
