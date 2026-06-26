@@ -4,9 +4,7 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-# =========================
 # Fake Database
-# =========================
 
 users = []
 projects = []
@@ -17,9 +15,7 @@ project_id = 1
 task_id = 1
 
 
-# =========================
 # Home Route
-# =========================
 
 @app.route("/")
 def home():
@@ -28,10 +24,7 @@ def home():
     })
 
 
-# =========================
 # Register User
-# =========================
-
 @app.route("/register", methods=["POST"])
 def register():
 
@@ -63,9 +56,7 @@ def register():
     })
 
 
-# =========================
 # Login User
-# =========================
 
 @app.route("/login", methods=["POST"])
 def login():
@@ -89,9 +80,7 @@ def login():
     }), 401
 
 
-# =========================
 # Get All Users
-# =========================
 
 @app.route("/users")
 def get_users():
@@ -99,9 +88,7 @@ def get_users():
     return jsonify(users)
 
 
-# =========================
 # Create Project
-# =========================
 
 @app.route("/projects", methods=["POST"])
 def create_project():
@@ -124,9 +111,7 @@ def create_project():
     return jsonify(project)
 
 
-# =========================
 # Get All Projects
-# =========================
 
 @app.route("/projects")
 def get_projects():
@@ -134,9 +119,7 @@ def get_projects():
     return jsonify(projects)
 
 
-# =========================
 # Get Single Project
-# =========================
 
 @app.route("/projects/<int:id>")
 def get_project(id):
@@ -151,9 +134,7 @@ def get_project(id):
     }), 404
 
 
-# =========================
 # Delete Project
-# =========================
 
 @app.route("/projects/<int:id>", methods=["DELETE"])
 def delete_project(id):
@@ -173,9 +154,7 @@ def delete_project(id):
     }), 404
 
 
-# =========================
 # Create Task
-# =========================
 
 @app.route("/tasks", methods=["POST"])
 def create_task():
@@ -199,9 +178,7 @@ def create_task():
     return jsonify(task)
 
 
-# =========================
 # Get Tasks By Project
-# =========================
 
 @app.route("/tasks")
 def get_tasks():
@@ -222,9 +199,7 @@ def get_tasks():
     return jsonify(project_tasks)
 
 
-# =========================
 # Get Single Task
-# =========================
 
 @app.route("/tasks/<int:id>")
 def get_task(id):
@@ -239,9 +214,7 @@ def get_task(id):
     }), 404
 
 
-# =========================
 # Update Task
-# =========================
 
 @app.route("/tasks/<int:id>", methods=["PUT"])
 def update_task(id):
@@ -269,9 +242,7 @@ def update_task(id):
     }), 404
 
 
-# =========================
 # Delete Task
-# =========================
 
 @app.route("/tasks/<int:id>", methods=["DELETE"])
 def delete_task(id):
@@ -291,9 +262,7 @@ def delete_task(id):
     }), 404
 
 
-# =========================
 # Dashboard Stats
-# =========================
 
 @app.route("/stats")
 def stats():
@@ -315,9 +284,7 @@ def stats():
     })
 
 
-# =========================
 # Run App
-# =========================
 
 if __name__ == "__main__":
     app.run(debug=True)
