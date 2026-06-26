@@ -104,7 +104,7 @@ def home():
 # Authentication
 @app.route("/register", methods=["POST"])
 def register():
-    """Creates a new user account and returns a JWT token."""
+    # Creates a new user account and returns a JWT token
     global user_id_counter
 
     data = request.json
