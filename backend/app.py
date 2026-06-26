@@ -98,21 +98,13 @@ def require_auth(f):
 
     return wrapper
 
-
-# ============================================================
 # Routes
-# ============================================================
-
 @app.route("/")
 def home():
     return jsonify({"message": "Simple Project Management API"})
 
 
-# .................................................................
 # Authentication
-# .................................................................
-
-
 @app.route("/register", methods=["POST"])
 def register():
     """Creates a new user account and returns a JWT token."""
@@ -168,11 +160,7 @@ def login():
     return jsonify({"message": "Invalid email or password"}), 401
 
 
-# .................................................................
 # Users
-# .................................................................
-
-
 @app.route("/users")
 @require_auth
 def get_users():
@@ -189,11 +177,7 @@ def get_users():
     return jsonify(user_list)
 
 
-# .................................................................
 # Projects
-# .................................................................
-
-
 @app.route("/projects", methods=["GET", "POST"])
 @require_auth
 def handle_projects():
@@ -289,11 +273,7 @@ def update_project(project_id):
     return jsonify(found_project)
 
 
-# .................................................................
 # Project Members
-# .................................................................
-
-
 @app.route("/projects/<int:project_id>/members", methods=["GET", "POST"])
 @require_auth
 def handle_members(project_id):
@@ -397,11 +377,7 @@ def remove_member(project_id, member_user_id):
     return jsonify({"message": "Member removed"})
 
 
-# .................................................................
 # Tasks
-# .................................................................
-
-
 @app.route("/tasks", methods=["GET", "POST"])
 @require_auth
 def handle_tasks():
